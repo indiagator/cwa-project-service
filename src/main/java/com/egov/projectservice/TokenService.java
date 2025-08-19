@@ -1,4 +1,4 @@
-package com.egov.matchservice;
+package com.egov.projectservice;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +15,7 @@ public class TokenService
     @Autowired
     private ApplicationContext ctx;
 
-    public boolean validateToken(String token)
+    public Principal validateToken(String token)
     {
 
         log.info("TokenService.validateToken() called with token: " + token);
@@ -24,22 +24,23 @@ public class TokenService
 
         log.info("Calling auth-service to validate token: " + token);
         // forward a request to the auth service for validation
-        String authResponse = authValidateWebClient.get()
+        Principal authResponse = authValidateWebClient.get()
                 .header("Authorization", token)
                 .retrieve()
-                .bodyToMono(String.class)
+                .bodyToMono(Principal.class)
                 .block(); // Thread is Blocked until the response is received | SYNC
 
         log.info("Response from auth-service: " + authResponse);
-        if (authResponse.equals("VALID"))
+
+        if (authResponse.getState().equals("VALID"))
         {
             log.info("Token is valid");
-            return true;
+            return authResponse;
         }
-        else if (authResponse.equals("INVALID"))
+        else if (authResponse.getState().equals("INVALID"))
         {
             log.info("Token is invalid");
-            return false;
+            return authResponse;
         }
         else
         {
